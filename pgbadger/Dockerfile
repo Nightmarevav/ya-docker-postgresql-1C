@@ -19,8 +19,8 @@ RUN apt-get update && apt-get -y install \
     rsyslog 
 
 # Download Nginx signing key
-RUN apt-key adv --recv-keys --keyserver keyserver.ubuntu.com C300EE8C
-
+#RUN apt-key adv --recv-keys --keyserver keyserver.ubuntu.com C300EE8C
+RUN apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 7F438280EF8D349F
 # Add to repository sources list
 RUN add-apt-repository ppa:nginx/stable
 
