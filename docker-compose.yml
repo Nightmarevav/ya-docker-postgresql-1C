@@ -1,4 +1,4 @@
-version: '2'
+version: '2.1'
 services:
   PostgreSQL:
     restart: always
@@ -9,6 +9,10 @@ services:
     #   - /var/lib/postgresql/temptblspc
     ports:
       - "5432:5432"
+    networks: 
+      net:
+        ipv4_address: 172.19.0.2
+    #hostname: "docker.psql.local"
     environment:
       - USETMPFS_FOR_TMP=true
       - DEBUG=true
@@ -35,8 +39,13 @@ services:
 
   PgAdminDBA:
     image: dpage/pgadmin4
+    restart: always
+    depends_on: 
+          - PostgreSQL
     ports: 
       - 8880:80
+    networks:
+      - net
     environment:
       - PGADMIN_DEFAULT_EMAIL=team@silverbulleters.org
       - PGADMIN_DEFAULT_PASSWORD=somepass
@@ -48,77 +57,16 @@ services:
       - PostgreSQL:master
  #     - PostgreSQLSlave:slave
 
-  PowaWeb:
-      build: 
-        context: powa-web
-      image: silverbulleters/powa-web:latest
-      ports:
-        - 8899:8888
-      links:
-        - PostgreSQL:master
- #       - PostgreSQLSlave:slave
-
-  pghero-db1:
-    image: ankane/pghero:v2.0.2
-    environment:
-      - DATABASE_URL=postgres://postgres:somepass@master-db:5432/frag-20
-    links:
-      - PostgreSQL:master-db
-    ports:
-      - 10000:8080
-    
-  pgbadger:
-    container_name: pgbadger
-    build: 
-      context: pgbadger
-    image: silverbulleters/pgbadger:latest
-    ports:
-      - 9980:80
-    volumes:
-      - logstash-data:/var/log/pg-logs
-      # - ./:/srv
-
-  mamonsu:
-    container_name: mamonsu
-    build: 
-      context: mamonsu
-    image: silverbulleters/mamonsu:latest
-    environment:
-      - ZABBIX_URL=http://127.0.0.1:8081/
-      - ZABBIX_SERVER=127.0.0.1
-      - ZABBIX_USER=Admin
-      - ZABBIX_PASSWD=zabbix
-      - PG_SERVER=127.0.0.1
-      - PG_USER=postgres
-      - MAMONSU_DB=mamonsu
-    ports:
-      - 10050:10050
-    links:
-      - PostgreSQL:master
-
-  log-beats:
-    build:
-      context: filebeat/
-    image: silverbulleters/filebeat:6.1.0
-    volumes:
-      - pg-log-master:/var/log/postgresql:ro
-
-  logstash:
-    build:
-      context: logstash/
-    image: silverbulleters/logstash:6.1.0
-    volumes:
-      - ./logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml:ro
-      - ./logstash/pipeline:/usr/share/logstash/pipeline:ro
-      - logstash-data:/var/log/pg-logs/
-    ports:
-      - "5000:5000"
-      - "5044:5044"
-      - "9600:9600"
-    environment:
-      LS_JAVA_OPTS: "-Xmx256m -Xms256m"
-
-
+ 
+networks:
+  net:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.19.0.0/24
+          gateway: 172.19.0.1
+ 
 volumes:
    pg-data-master:
    pg-temptbl-master:
@@ -127,6 +75,5 @@ volumes:
    pg-log-master:
 
    pgadmin-data:
-
    logstash-data:
    
