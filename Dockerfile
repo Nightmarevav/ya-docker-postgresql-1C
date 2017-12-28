@@ -6,6 +6,7 @@ LABEL maintainer.base="sameer@damagehead.com" \
 ENV DEBIAN_FRONTEND=noninteractive
 
 ENV PG_APP_HOME="/etc/docker-postgresql"\
+    PG_DIST_VERSION=9.6.6.1 \
     PG_VERSION=9.6 \
     PG_USER=postgres \
     PG_HOME=/var/lib/postgresql \
@@ -31,36 +32,38 @@ ENV LC_MESSAGES "POSIX"
 ADD tools/postgrepinning /etc/apt/preferences.d/postgres
 
 RUN wget --quiet -O - http://1c.postgrespro.ru/keys/GPG-KEY-POSTGRESPRO-1C | apt-key add - \
- && echo 'deb http://1c.postgrespro.ru/deb/ trusty main' > /etc/apt/sources.list.d/postgrespro-1c.list \
+ && echo deb http://repo.postgrespro.ru/pgpro-archive/pgpro-${PG_DIST_VERSION}/ubuntu/ trusty main > /etc/apt/sources.list.d/postgrespro-std.list\
+ #&& echo 'deb http://1c.postgrespro.ru/deb/ trusty main' > /etc/apt/sources.list.d/postgrespro-1c.list \
  && apt-get update \
- && DEBIAN_FRONTEND=noninteractive apt-get install -y curl acl \
-      postgresql-pro-1c-${PG_VERSION} postgresql-client-pro-1c-${PG_VERSION} postgresql-contrib-pro-1c-${PG_VERSION} \
- && ln -sf ${PG_DATADIR}/postgresql.conf /etc/postgresql/${PG_VERSION}/main/postgresql.conf \
- && ln -sf ${PG_DATADIR}/pg_hba.conf /etc/postgresql/${PG_VERSION}/main/pg_hba.conf \
- && ln -sf ${PG_DATADIR}/pg_ident.conf /etc/postgresql/${PG_VERSION}/main/pg_ident.conf 
+ && apt-get install -y postgrespro-${PG_VERSION}
+ #&& DEBIAN_FRONTEND=noninteractive apt-get install -y curl acl \
+ #     postgresql-pro-1c-${PG_VERSION} postgresql-client-pro-1c-${PG_VERSION} postgresql-contrib-pro-1c-${PG_VERSION} \
+ #&& ln -sf ${PG_DATADIR}/postgresql.conf /etc/postgresql/${PG_VERSION}/main/postgresql.conf \
+ #&& ln -sf ${PG_DATADIR}/pg_hba.conf /etc/postgresql/${PG_VERSION}/main/pg_hba.conf \
+ #&& ln -sf ${PG_DATADIR}/pg_ident.conf /etc/postgresql/${PG_VERSION}/main/pg_ident.conf 
 
-WORKDIR /tmp
+#WORKDIR /tmp
 
-RUN curl -s https://packagecloud.io/install/repositories/postgrespro/mamonsu/script.deb.sh | bash
-RUN apt-get install mamonsu -y
+#RUN curl -s https://packagecloud.io/install/repositories/postgrespro/mamonsu/script.deb.sh | bash
+#RUN apt-get install mamonsu -y
 
-WORKDIR /usr/local/src
+#WORKDIR /usr/local/src
 
-RUN apt-get update && apt-get install -y \
-    gcc \
-    jq \
-    make \
-    postgresql-contrib-pro-1c-${PG_VERSION}  \
-    postgresql-server-dev-pro-1c-${PG_VERSION}  \
-    postgresql-plpython-pro-1c-${PG_VERSION} \
-    && wget -O- $(wget -O- https://api.github.com/repos/dalibo/powa-archivist/releases/latest|jq -r '.tarball_url') | tar -xzf - \
-    && wget -O- $(wget -O- https://api.github.com/repos/dalibo/pg_qualstats/releases/latest|jq -r '.tarball_url') | tar -xzf - \
-    && wget -O- $(wget -O- https://api.github.com/repos/dalibo/pg_stat_kcache/releases/latest|jq -r '.tarball_url') | tar -xzf - \
-    && wget -O- $(wget -O- https://api.github.com/repos/dalibo/hypopg/releases/latest|jq -r '.tarball_url') | tar -xzf - \
-    && wget -O- $(wget -O- https://api.github.com/repos/rjuju/pg_track_settings/releases/latest|jq -r '.tarball_url') | tar -xzf - \
-    && wget -O- $(wget -O- https://api.github.com/repos/reorg/pg_repack/tags|jq -r '.[0].tarball_url') | tar -xzf - \
-    && for f in $(ls); do cd $f; make install; cd ..; rm    -rf $f; done \
-    && apt-get purge -y --auto-remove curl gcc jq make postgresql-server-dev-pro-1c-${PG_VERSION} wget
+#RUN apt-get update && apt-get install -y \
+#    gcc \
+#    jq \
+#    make \
+#    postgresql-contrib-pro-1c-${PG_VERSION}  \
+#    postgresql-server-dev-pro-1c-${PG_VERSION}  \
+#    postgresql-plpython-pro-1c-${PG_VERSION} \
+#    && wget -O- $(wget -O- https://api.github.com/repos/dalibo/powa-archivist/releases/latest|jq -r '.tarball_url') | tar -xzf - \
+#    && wget -O- $(wget -O- https://api.github.com/repos/dalibo/pg_qualstats/releases/latest|jq -r '.tarball_url') | tar -xzf - \
+#    && wget -O- $(wget -O- https://api.github.com/repos/dalibo/pg_stat_kcache/releases/latest|jq -r '.tarball_url') | tar -xzf - \
+#    && wget -O- $(wget -O- https://api.github.com/repos/dalibo/hypopg/releases/latest|jq -r '.tarball_url') | tar -xzf - \
+#    && wget -O- $(wget -O- https://api.github.com/repos/rjuju/pg_track_settings/releases/latest|jq -r '.tarball_url') | tar -xzf - \
+#    && wget -O- $(wget -O- https://api.github.com/repos/reorg/pg_repack/tags|jq -r '.[0].tarball_url') | tar -xzf - \
+#    && for f in $(ls); do cd $f; make install; cd ..; rm    -rf $f; done \
+#    && apt-get purge -y --auto-remove curl gcc jq make postgresql-server-dev-pro-1c-${PG_VERSION} wget
 
  RUN rm -rf ${PG_HOME} \
  && rm -rf /var/lib/apt/lists/*
