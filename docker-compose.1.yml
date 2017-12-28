@@ -32,6 +32,28 @@ services:
       - pg-v81cdata-master:/var/lib/postgresql/v81c_data
       - pg-v81cindex-master:/var/lib/postgresql/v81c_index
       - pg-log-master:/var/log/postgresql
+    
+
+  PostgreSQLSlave:
+    image: silverbulleters/ya-docker-postgresql-1c:latest
+    # tmpfs:
+    #   - /var/lib/postgresql/temptblspc
+    links: 
+      - PostgreSQL:master
+    environment: 
+      - USETMPFS-FOR-TMP=true
+      - REPLICATION_MODE=slave
+      - REPLICATION_USER=repluser
+      - REPLICATION_PASS=replpass
+      - REPLICATION_HOST=master
+      - REPLICATION_PORT=5432
+      - REPLICATION_SSLMODE=prefer
+    volumes:
+      - pg-data-slave:/var/lib/postgresql/9.6/main
+      - pg-temptbl-slave:/var/lib/postgresql/temptblspc
+      - pg-v81cdata-slave:/var/lib/postgresql/v81c_data
+      - pg-v81cindex-slave:/var/lib/postgresql/v81c_index
+      - pg-log-slave:/var/log/postgresql
 
   PgAdminDBA:
     image: dpage/pgadmin4
@@ -46,7 +68,7 @@ services:
       - pgadmin-data:/var/lib/pgadmin/
     links: 
       - PostgreSQL:master
- #     - PostgreSQLSlave:slave
+      - PostgreSQLSlave:slave
 
   PowaWeb:
       build: 
@@ -56,7 +78,7 @@ services:
         - 8899:8888
       links:
         - PostgreSQL:master
- #       - PostgreSQLSlave:slave
+        - PostgreSQLSlave:slave
 
   pghero-db1:
     image: ankane/pghero:v2.0.2
@@ -125,6 +147,12 @@ volumes:
    pg-v81cdata-master:
    pg-v81cindex-master:
    pg-log-master:
+
+   pg-data-slave:
+   pg-temptbl-slave:
+   pg-v81cdata-slave:
+   pg-v81cindex-slave:
+   pg-log-slave:
 
    pgadmin-data:
 
